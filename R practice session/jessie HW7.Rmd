@@ -1,0 +1,103 @@
+---
+title: "IEOR 241 Problem Set 7"
+author: "Ji, Zhe (303-216-2628)"
+output: html_document
+---
+
+#### 1(a)
+
+```{r}
+data1 <- c(0.5203, -0.1755, -2.6259, 4.7410, 2.7802, 4.3943, 10.4235, 1.9211, 1.0887, 2.3404)
+m1 <- sum(data1)/length(data1)
+m2 <- mean(data1)
+s1 <- sum((data1-m1)^2)/(length(data1)-1)
+s2 <- var(data1)
+data.frame(m1,m2,s1,s2)
+```
+
+sample mean = $\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x}) = 2.54081$
+
+sample variance = $\frac{1}{n-1}\sum_{i=1}^n(x_i-\bar{x})^2 \approx 12.35099$
+
+Hand calculation is validated by the default function in R.
+
+#### 1(b)
+
+```{r}
+n <- length(data1)
+e <- qnorm(0.95)*sqrt(16/n)
+lb <- m1-e
+ub <- m1+e
+t.test(data1, conf.level = 0.9)
+```
+
+Despite the inaccuracy from hand calculation, the 90% confidence interval for the data is (0.50,4.58). It means that, if we use the same sampling method to select different samples, and thus compute the sample means, we expect that the true population mean would fall in within the interval of (0.50,4.58) 95% of the time.
+
+#### 1(c)
+
+```{r}
+fn <- function(cv){
+  e <- qnorm(cv+(1-cv)/2)*sqrt(16/10)
+  lb <- m1-e
+  ub <- m1+e
+  df <- data.frame(critical_v=cv,mean =m1, lower_b=lb,upper_b=ub)
+}
+
+cv <- c(0, 0.25, 0.5, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99, 1)
+
+(table_1c <- fn(cv))
+
+library(ggplot2)
+limits <- aes(ymin = lower_b, ymax = upper_b)
+ggplot(table_1c, aes(x=critical_v, y=mean)) + geom_line() + geom_point()+ geom_pointrange(limits) + geom_ribbon(data=table_1c, limits, alpha=0.1)
+```
+
+#### 1(d)
+
+```{r}
+ggplot(table_1c, aes(x=critical_v, y=mean)) + geom_line() + geom_point()+ geom_pointrange(limits) + geom_ribbon(data=table_1c, limits, alpha=0.1) + geom_line(y=3,colour='red')
+
+table_1d<-fn(seq(0.2, 0.3, by=0.01))
+table_1d <- table_1d[,-2]
+table_1d$YN <- ifelse(3>=table_1d$lower_b & 3<=table_1d$upper_b,"YES","NO")
+table_1d
+```
+
+From the graph, it's likely that the desired critical value is less than 0.3. Through further calculation, the critical value should be less than 0.29 so that the confidence interval does not cover the true mean.
+
+#### 2(a)
+
+set.seed(12345)
+data2 <- data.frame(rexp(n=300, rate=1))
+data2_c <- as.data.frame(split(data2,rep(1:30,each=10)))
+data2_c
+m <- as.numeric(colMeans(data2_c))
+m
+
+#### 2(b)
+mean(m)
+## [1] 0.9638375
+var(m)
+## [1] 0.09415487
+t.test(m,conf.level = 0.95)
+#### 2(c)
+
+
+#### 3(a)
+
+```{r}
+data3 <- c(15,25,4,20)
+(data3_m <- sum(data3)/length(data3))
+(data3_c <- data3-data3_m)
+scale(data3,center=T,scale=F)
+```
+
+Sample mean of this data is 16. Centered data is (-1, 9, -12, 4). Hand calculation is validated with built-in function in R.
+
+#### 3(b)
+
+#### 3(c)
+
+#### 3(d)
+
+#### 3(e)

@@ -1,0 +1,264 @@
+---
+title: "Bank of America's Disney Case Study"
+author: "Nicholas Yuk"
+date: "December 6, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#1
+The acquisition of ABC was not beneficial for Disney  
+*Pros:  
+  1. Multiple channels of distribution (exhibit 3)  
+  2. Cross promotion   
+  3. Increased revenues (exhibit 1)  
+
+*Cons:  
+  1. BC ratings have continuously dropped nearly every year after the acquisition in 1995  
+      + Lack of "top" shows  
+      + Failure to integrate Disney component to boost ratings  
+  2. ROA down nearly 1/3 (exhibit 1)  
+  3. ROE down nearly 1/2 (exhibit 1)  
+  4. Lower Operating Margin (exhibit 1)  
+    
+How I would manage corporate synergy while ensuring both ABC and Disney achieve sustainable growth is by keeping the two as two distinct entities with their own leaders who reports to the C-level management. The C level management drive the vision while both entities strive for excellence in their own fields. It was noted in the case that the two had a work culture difference which made it hard to integrate the two. In addition to keeping two separate identities, it is important to note that a small team should be created whose main objective is to cross promote Disney into ABC. The team focuses on transactions between the two when Disney needs promotion. Furthermore, ABC's small team will focus on constructing and supporting a dedicated Disney distribution just like how they have the subsidiary group of ESPN. By creating a smaller team dedicated for Disney, the team is more likely to generate successful results within both parties.  
+
+
+#2
+Data input
+```{r results='hide', message=FALSE, warning=FALSE}
+library(forecast)
+```
+
+```{r, cache = FALSE}
+revtotal <- c(1307, 1656, 1701, 2166, 2877, 3438, 4594, 5844, 6112, 7504, 8529, 10055, 12112, 18739, 22473, 22976, 23435, 25402)
+
+revtotaltimeseries <- ts(revtotal, frequency = 1, start= c(1983,1))
+revtotaltimeseries
+
+opincometotal <- c(214,242,345,528,777,885,1229,1425,1095,1435,1724,1966,2446,3033,4751,4015,3687,4081)
+
+opincometotaltimeseries <- ts(opincometotal, frequency = 1, start= c(1983,1))
+opincometotaltimeseries
+```
+
+Check ARIMA values
+```{r}
+revtotaltimeseriesdiff2 <- diff(revtotaltimeseries, differences = 2)
+plot.ts(revtotaltimeseriesdiff2)
+
+#stationary mean and variance, thus arima (p, 2, q)
+
+acf(revtotaltimeseriesdiff2, lag.max=20)             # plot a correlogram
+acf(revtotaltimeseriesdiff2, lag.max=20, plot=FALSE) # get the autocorrelation values
+
+pacf(revtotaltimeseriesdiff2, lag.max=20)  
+
+#we will use ARIMA (0,2,0 since autoregressive model of order and moving average model of order p & q = 0)
+
+```
+
+Autofind ARIMA and plot for Revenue Totals
+```{r}
+auto.arima(revtotaltimeseries) # confirms using ARIMA(0,2,0)
+
+revtotaltimeseriesarima <- arima(revtotaltimeseries, order = c(0,2,0))
+revtotaltimeseriesarima
+
+revtotaltimeseriesforecasts <- forecast.Arima(revtotaltimeseriesarima, h= 10) # next 10 years
+
+revtotaltimeseriesforecasts
+
+plot.forecast(revtotaltimeseriesforecasts, main = "Forecasts for Revenue Totals using ARIMA (0,2,0)", xlab = "Year", ylab = "Revenue in millions")
+
+acf(revtotaltimeseriesforecasts$residuals, lag.max=20)
+Box.test(revtotaltimeseriesforecasts$residuals, lag=20, type="Ljung-Box")
+mean(revtotaltimeseriesforecasts$residuals) #checking the negative forecasts
+```
+
+Autofind ARIMA and plot for Operating Income Totals
+```{r}
+auto.arima(opincometotaltimeseries) # confirms using ARIMA(0,1,0)
+
+opincometotaltimeseriesarima <- arima(opincometotaltimeseries, order = c(0,1,0))
+opincometotaltimeseriesarima
+
+opincometotaltimeseriesforecasts <- forecast.Arima(opincometotaltimeseriesarima, h= 10)
+
+opincometotaltimeseriesforecasts
+
+plot.forecast(opincometotaltimeseriesforecasts, main = "Forecasts for Operating Income Totals using ARIMA (0,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+From the two forecasts for revenue totals and Operating income, we notice a positive correlation in revenue totals and a flatline correlation for operating income totals. The expected outcome is $45,072 million in revenue in 2010 for Disney and $4,081 million in operating income.  
+
+Operating income is the most important value from Exhibit 1 because it shows how much a company's revenue will eventually become a profit. As a conclusion, the forecast predicts stunted profits even though there is a growth in total revenue. This may possibly be attributed to the rise in operating expenses, depreciation, and/or amortization.  
+
+##2a
+In creating the forecasts, the model depicts an expected value that assumes that no random events happen that can trigger or cause a drop or rise in the values (for example: another merger, or dumping ABC in the future). The model is non-causal so it extrapolates historical values to forcast future values based off past patterns.
+
+##2b
+I am confident in my forecasts because ARIMA (Auto Regressive Integrated Moving Average) models are the best suited to account for varying trends, varying levels, and seasonanality. They are know as the most powerful non-causal forecasting models. In additon, it is well suited for short to medium term forecasts horizons while having a long shelf life compared to weaker non-causal methods such as exponential smoothing, Holt's, and Winter's.  
+
+It can also be noticed that the Operating Income Totals did baseline after the acquisition and that all the Ratios (operating margin, ROA, and ROE) were significantly lower after 1995 (Exhibit 1).  
+
+#3  
+In terms of growth, Theme parks and resorts have the highest potential for growth. Even though the forecasted 95% High is 16273 for Theme parks and resorts is lower than the forecasted 95% High of 19315.07 for Media networks, Theme Parks has a strong positively upward trend while the Media forecast was due to a small sample size with large variability.  
+
+End of the day, theme parks and resorts have the largest growth potential.  
+ARIMA forecasts for Theme parks and resorts
+```{r}
+theme <- c(1031,1097,1258,1524,1834,2042,2595,3020,2794,3307,3441,3464,3960,4502,5014,5532,6139,6803)
+
+themetimeseries <- ts(theme, frequency = 1, start= c(1983,1))
+
+auto.arima(themetimeseries) # confirms using ARIMA(0,2,1)
+
+themetimeseriesarima <- arima(themetimeseries, order = c(0,2,1))
+
+themetimeseriesforecasts <- forecast.Arima(themetimeseriesarima, h= 10)
+themetimeseriesforecasts
+
+plot.forecast(themetimeseriesforecasts, main = "Forecasts for Theme Parks and Resorts using ARIMA (0,2,1)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+ARIMA forecasts for Studio Entertainment
+```{r}
+SE <- c(165,245,320,512,876,1149,1588,2250,2594,3115,3673,4793,6001,6471,6981,6586,6166,5994)
+
+SEtimeseries <- ts(SE, frequency = 1, start= c(1983,1))
+
+auto.arima(SEtimeseries) # confirms using ARIMA(1,1,0)
+
+SEtimeseriesarima <- arima(SEtimeseries, order = c(1,1,0))
+
+SEtimeseriesforecasts <- forecast.Arima(SEtimeseriesarima, h= 10)
+SEtimeseriesforecasts
+
+plot.forecast(SEtimeseriesforecasts, main = "Studio Entertainment using ARIMA (1,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+
+ARIMA forecasts for Consumer Products
+```{r}
+SE <- c(111,110,123,130,167,247,411,574,724,1082,1425,1798,2151,3688,3782,3165,2954,2622)
+
+SEtimeseries <- ts(SE, frequency = 1, start= c(1983,1))
+
+auto.arima(SEtimeseries) # confirms using ARIMA(0,1,0)
+
+SEtimeseriesarima <- arima(SEtimeseries, order = c(0,1,0))
+
+SEtimeseriesforecasts <- forecast.Arima(SEtimeseriesarima, h= 10)
+SEtimeseriesforecasts
+
+plot.forecast(SEtimeseriesforecasts, main = "Consumer Products using ARIMA (0,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+
+ARIMA forecasts for Media Networks
+```{r}
+ME <- c(4078,6522,7433,7970,9615)
+
+MEtimeseries <- ts(ME, frequency = 1, start= c(1996,1))
+
+auto.arima(MEtimeseries) # confirms using ARIMA(0,1,0)
+
+MEtimeseriesarima <- arima(MEtimeseries, order = c(0,1,0))
+
+MEtimeseriesforecasts <- forecast.Arima(MEtimeseriesarima, h= 10)
+MEtimeseriesforecasts
+
+plot.forecast(MEtimeseriesforecasts, main = "Media Networks using ARIMA (0,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+ 
+It is clear that Direct Marketing is a lost cause, losing the company money.
+
+
+#4  
+The biggest risk involving the theme parks and resorts growth potential is that the forecast of operating income is flatlined. This means that profits won't be increasing even though the revenues are trending upwards. This is a big issue. In addition, the theme parks and resorts must be able to cater to multiple generations, otherwise it is very easy to lose a fan base and have nonsustainable growth. In order to track this risk, it is important to collect data on demographics.
+
+ARIMA forecasts for Theme parks and resorts
+```{r}
+theme <- c(190,186,255,404,549,565,785,889,547,644,747,684,861,990,1136,1288,1479,1620)
+
+themetimeseries <- ts(theme, frequency = 1, start= c(1983,1))
+
+auto.arima(themetimeseries) # confirms using ARIMA(0,1,0)
+
+themetimeseriesarima <- arima(themetimeseries, order = c(0,1,0))
+
+themetimeseriesforecasts <- forecast.Arima(themetimeseriesarima, h= 10)
+themetimeseriesforecasts
+
+plot.forecast(themetimeseriesforecasts, main = "Forecasts for Theme Parks and Resorts using ARIMA (0,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+
+ARIMA forecasts for Studio Entertainment
+```{r}
+SE <- c(-33,1,34,52,131,186,257,313,318,508,622,856,1074,895,1079,749,154,110)
+
+SEtimeseries <- ts(SE, frequency = 1, start= c(1983,1))
+
+auto.arima(SEtimeseries) # confirms using ARIMA(0,1,0)
+
+SEtimeseriesarima <- arima(SEtimeseries, order = c(0,1,0))
+
+SEtimeseriesforecasts <- forecast.Arima(SEtimeseriesarima, h= 10)
+SEtimeseriesforecasts
+
+plot.forecast(SEtimeseriesforecasts, main = "Studio Entertainment using ARIMA (0,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+
+ARIMA forecasts for Consumer Products
+```{r}
+SE <- c(57,54,56,7,97,134,187,223,230,283,355,426,511,577,893,810,600,455)
+
+SEtimeseries <- ts(SE, frequency = 1, start= c(1983,1))
+
+auto.arima(SEtimeseries) # confirms using ARIMA(0,1,0)
+
+SEtimeseriesarima <- arima(SEtimeseries, order = c(0,1,0))
+
+SEtimeseriesforecasts <- forecast.Arima(SEtimeseriesarima, h= 10)
+SEtimeseriesforecasts
+
+plot.forecast(SEtimeseriesforecasts, main = "Consumer Products using ARIMA (0,1,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+
+ARIMA forecasts for Media Networks
+```{r}
+ME <- c(871,1699,1757,1580,298)
+
+MEtimeseries <- ts(ME, frequency = 1, start= c(1996,1))
+
+auto.arima(MEtimeseries) # confirms using ARIMA(0,0,0)
+
+MEtimeseriesarima <- arima(MEtimeseries, order = c(0,0,0))
+
+MEtimeseriesforecasts <- forecast.Arima(MEtimeseriesarima, h= 10)
+MEtimeseriesforecasts
+
+plot.forecast(MEtimeseriesforecasts, main = "Media Networks using ARIMA (0,0,0)", xlab = "Year", ylab = "Revenue in millions")
+
+```
+ 
+It is clear that Direct Marketing is a lost cause, losing the company money.  
+
+#5  
+I would assess my forecast as above average. The reason is because as mentioned, the ARIMA method is one of the more powerful non-causal time series methods. Using ANN, would be going overboard with the limited data set being given. Nonetheless, ARIMA still has troubles predicting long horizons because of random walk variability, as do many other forecasting methods.  
+
+Naturally it would be best to find MAD (mean average deviation) or MSE (mean squared error) for the following years, but given that it is 2000, there is no live test set. Had there been no acquisition, it would have been safe to use the first 10 years as a training set for the forecast regression and then the forecast the next 5 years. Then from there find the MAD or MSE of those 5 years. If the MAD or MSE is good or close to zero then that would mean the forecast regression was a good indicator.
+
+#6  
+The risk that Disney Corporation as a whole faces are mainly keeping a balance between the two entities of Disney and ABC. It is clear from the monetary side that after the acquisition, the monetary growth somewhat stagnanted. The two could de-merge and then potentially start growing rapidly on their own as well as new competitors may merge and create a larger conglomerate that overtakes Disney in its many industries. For example, if a better theme park and resort enters the industry and Disney does not adapt, Disney's highest revenue generator will lose market share and affect the bottom line of profit. Forecasts cannot predict random events such as new threats or potential implosions of the company, therefore such events would drastically change the projected growth line.  
+
+#Conclusion
+**Eisner's 20% growth rate target IS attainable over the next 10 years for Disney**
